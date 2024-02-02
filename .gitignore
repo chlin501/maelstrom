@@ -16,5 +16,8 @@ store/
 .hg/
 .DS_Store
 .idea
+.bsp
 /demo/rust/target
 __pycache__/
+target/
+build.properties
