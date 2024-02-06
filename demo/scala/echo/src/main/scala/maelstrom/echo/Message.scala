@@ -33,7 +33,7 @@ final case class Message(src: String, dest: String, body: JsonObject) {
       .asArray()
       .iterator()
       .asScala
-      .map(_.asObject().asString())
+      .map(_.asString())
       .toSeq
   }
 
