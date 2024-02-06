@@ -30,7 +30,7 @@ object Node extends Logging {
 class Node() extends Logging {
 
   var nodeId = ""
-  var nodeIds = Seq.empty[String]
+  private var nodeIds = Seq.empty[String]
 
   private def send(message: Message): Unit = {
     val data = message.dump()
