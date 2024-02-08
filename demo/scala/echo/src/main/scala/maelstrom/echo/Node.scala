@@ -14,7 +14,7 @@ object Node extends Logging {
     val node = new Node()
     node.accept({ case Request("echo", request) =>
       log(s"Handle message type echo for the request $request ...");
-      val newBody = request replace Json
+      val newBody = request replaceBy Json
         .`object`()
         .add("type", "echo_ok")
         .add("echo", request.body.getString("echo", ""))
@@ -48,7 +48,7 @@ class Node extends Logging {
           nodeId = message.nodeId() // n1
           nodeIds = message.nodeIds()
           val newBody =
-            message replace Json.`object`().add("type", "init_ok")
+            message replaceBy Json.`object`().add("type", "init_ok")
           send(Message(nodeId, message.src, newBody))
           "init"
         case "echo" =>

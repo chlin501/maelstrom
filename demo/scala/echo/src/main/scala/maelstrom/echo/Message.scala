@@ -21,12 +21,12 @@ final case class Message(src: String, dest: String, body: JsonObject) {
   def `type`(default: String = ""): String =
     body.asObject().getString("type", default)
 
-  def messageId(): Long = body.asObject().getLong("msg_id", -1L)
+  private def messageId(): Long = body.asObject().getLong("msg_id", -1L)
 
   def nodeId(default: String = ""): String =
     body.asObject().getString("node_id", default)
 
-  def replace(body: JsonObject): JsonObject =
+  def replaceBy(body: JsonObject): JsonObject =
     Json
       .`object`()
       .merge(body)
