@@ -26,6 +26,12 @@ final case class Message(src: String, dest: String, body: JsonObject) {
   def nodeId(default: String = ""): String =
     body.asObject().getString("node_id", default)
 
+  def replace(body: JsonObject): JsonObject =
+    Json
+      .`object`()
+      .merge(body)
+      .set("in_reply_to", messageId())
+
   def nodeIds(): Seq[String] = {
     body
       .asObject()
