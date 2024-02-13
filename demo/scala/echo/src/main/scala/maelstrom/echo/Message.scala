@@ -6,6 +6,8 @@ import scala.jdk.CollectionConverters._
 
 object Message {
 
+  def from(value: String): Message = from(Json.parse(value))
+
   def from(value: JsonValue): Message = {
     val obj = value.asObject()
     new Message(
@@ -26,10 +28,8 @@ final case class Message(src: String, dest: String, body: JsonObject) {
   def nodeId(default: String = ""): String =
     body.asObject().getString("node_id", default)
 
-  def replaceBy(body: JsonObject): JsonObject =
-    Json
-      .`object`()
-      .merge(body)
+  def newBodyWithMsgId(body: JsonObject): JsonObject =
+    body
       .set("in_reply_to", messageId())
 
   def nodeIds(): Seq[String] = {
