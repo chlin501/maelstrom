@@ -36,6 +36,7 @@ object Node extends Logging {
 class Node extends Logging {
 
   import Node._
+  import Message._
 
   private def accept(
       handle: PartialFunction[Request, Unit]
@@ -46,7 +47,7 @@ class Node extends Logging {
       val message = Message.from(Json.parse(line))
       log(s"Message from the line: $message")
       message.`type`() match {
-        case "init" =>
+        case Init =>
           val nodeId = message.nodeId()
           val _ = message.nodeIds()
           val replyBody =
@@ -57,12 +58,11 @@ class Node extends Logging {
             )
           val replyMsg = Message(nodeId, message.src, replyBody)
           send(replyMsg)
-          "init"
-        case "echo" =>
+          Init
+        case Echo =>
           handle(Request("echo", message))
-          "echo"
-        case msg @ _ => throw UnsupportedMessageException(msg)
+          Echo
       }
     }
-    .foreach { msg => log(s"Message $msg is handled!") }
+    .foreach { msgType => log(s"Message $msgType is handled!") }
 }
