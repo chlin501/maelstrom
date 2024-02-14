@@ -10,7 +10,7 @@ final case class Request(tpe: String, message: Message)
 
 object Node extends Logging {
 
-  def send(message: Message): Unit = {
+  private def send(message: Message): Unit = {
     val data = message.dump()
     log(s"Message to be sent back: $data")
     System.out.println(data)
@@ -20,15 +20,15 @@ object Node extends Logging {
   def main(args: Array[String]): Unit = {
     val node = new Node()
     node.accept({ case Request("echo", request) =>
-      log(s"Handle message type echo for the request $request ...");
+      log(s"Handle message type 'echo' for the request $request ...");
       val replyBody = request newBodyWithMsgId Json
         .`object`()
         .add("type", "echo_ok")
         .add("echo", request.body.getString("echo", ""))
-      val replyMsg = Message(node.nodeId, request.src, replyBody)
+      val replyMsg = Message(request.dest, request.src, replyBody)
       send(replyMsg)
       log(
-        s"Send message $replyMsg back (from ${node.nodeId} to ${request.src})"
+        s"Send message back from ${request.dest} $replyMsg to ${request.src}"
       )
     })
   }
@@ -36,9 +36,6 @@ object Node extends Logging {
 class Node extends Logging {
 
   import Node._
-
-  var nodeId = ""
-  private var nodeIds = Seq.empty[String]
 
   private def accept(
       handle: PartialFunction[Request, Unit]
@@ -50,8 +47,8 @@ class Node extends Logging {
       log(s"Message from the line: $message")
       message.`type`() match {
         case "init" =>
-          nodeId = message.nodeId() // n1
-          nodeIds = message.nodeIds()
+          val nodeId = message.nodeId()
+          val _ = message.nodeIds()
           val replyBody =
             message.newBodyWithMsgId(
               Json

@@ -20,8 +20,9 @@ object Message {
 }
 final case class Message(src: String, dest: String, body: JsonObject) {
 
-  def `type`(default: String = ""): String =
-    body.asObject().getString("type", default)
+  def `type`(default: String = ""): String = body
+    .asObject()
+    .getString("type", default)
 
   private def messageId(): Long = body.asObject().getLong("msg_id", -1L)
 
@@ -32,15 +33,15 @@ final case class Message(src: String, dest: String, body: JsonObject) {
     body
       .set("in_reply_to", messageId())
 
-  def nodeIds(): Seq[String] = {
-    body
-      .asObject()
-      .get("node_ids")
-      .asArray()
-      .iterator()
-      .asScala
-      .map(_.asString())
-      .toSeq
+  def nodeIds(): Seq[String] = body.asObject().get("node_ids") match {
+    case null => Seq.empty[String]
+    case value @ _ =>
+      value
+        .asArray()
+        .iterator()
+        .asScala
+        .map(_.asString())
+        .toSeq
   }
 
   def dump(): String =
