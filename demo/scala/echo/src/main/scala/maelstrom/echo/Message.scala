@@ -49,8 +49,14 @@ final case class Message(src: String, dest: String, body: JsonObject) {
   def nodeId(default: String = ""): String =
     body.asObject().getString("node_id", default)
 
+  /** Create a new json object by combining body with a new 'in_reply_to' field
+    * @param body is the json object
+    * @return a new json object that contains body and msg_id value
+    */
   def newBodyWithMsgId(body: JsonObject): JsonObject =
-    body
+    Json
+      .`object`()
+      .merge(body)
       .set("in_reply_to", messageId())
 
   def nodeIds(): Seq[String] = body.asObject().get("node_ids") match {

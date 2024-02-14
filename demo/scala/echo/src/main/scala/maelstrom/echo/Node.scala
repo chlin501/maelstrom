@@ -1,14 +1,12 @@
 package maelstrom.echo
 
 import scala.io.StdIn.readLine
-import com.eclipsesource.json.Json
-
-final case class UnsupportedMessageException(message: String)
-    extends RuntimeException(message)
-
-final case class Request(tpe: String, message: Message)
+import com.eclipsesource.json.{Json, JsonObject}
+import maelstrom.echo.Message._
 
 object Node extends Logging {
+
+  private final case class Request(msgType: ReceivedType, message: Message)
 
   private def send(message: Message): Unit = {
     val data = message.dump()
@@ -17,16 +15,24 @@ object Node extends Logging {
     System.out.flush()
   }
 
+  private def reply(src: String, dest: String, body: JsonObject): Message = {
+    val msg = Message(src, dest, body)
+    send(msg)
+    msg
+  }
+
   def main(args: Array[String]): Unit = {
     val node = new Node()
-    node.accept({ case Request("echo", request) =>
+    node.accept({ case Request(Echo, request) =>
       log(s"Handle message type 'echo' for the request $request ...");
-      val replyBody = request newBodyWithMsgId Json
-        .`object`()
-        .add("type", "echo_ok")
-        .add("echo", request.body.getString("echo", ""))
-      val replyMsg = Message(request.dest, request.src, replyBody)
-      send(replyMsg)
+      val replyMsg = reply(
+        request.dest,
+        request.src,
+        request newBodyWithMsgId Json
+          .`object`()
+          .add("type", EchoOk.toString())
+          .add("echo", request.body.getString("echo", ""))
+      )
       log(
         s"Send message back from ${request.dest} $replyMsg to ${request.src}"
       )
@@ -44,23 +50,24 @@ class Node extends Logging {
     .continually(readLine())
     .map { line =>
       log(s"A line read from stdin: $line")
-      val message = Message.from(Json.parse(line))
-      log(s"Message from the line: $message")
-      message.`type`() match {
+      val request = Message.from(Json.parse(line))
+      log(s"Message from the line: $request")
+      request.`type`() match {
         case Init =>
-          val nodeId = message.nodeId()
-          val _ = message.nodeIds()
-          val replyBody =
-            message.newBodyWithMsgId(
+          val nodeId = request.nodeId()
+          val _ = request.nodeIds()
+          reply(
+            nodeId,
+            request.src,
+            request.newBodyWithMsgId(
               Json
                 .`object`()
-                .add("type", "init_ok")
+                .add("type", InitOk.toString())
             )
-          val replyMsg = Message(nodeId, message.src, replyBody)
-          send(replyMsg)
+          )
           Init
         case Echo =>
-          handle(Request("echo", message))
+          handle(Request(Echo, request))
           Echo
       }
     }

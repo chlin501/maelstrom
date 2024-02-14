@@ -1,11 +1,44 @@
 package maelstrom.echo
 
-import com.eclipsesource.json.Json
+import com.eclipsesource.json.{Json, JsonArray}
 import org.scalatest._
 import flatspec._
 import org.scalatest.matchers.should._
 
+import scala.jdk.CollectionConverters.IteratorHasAsScala
+
 class MessageSpec extends AnyFlatSpec with Matchers {
+
+  "Message" should "create a new immutable json object with body and message id" in {
+    val body = Json
+      .`object`()
+      .add("type", "init")
+      .add("node_id", "n1")
+      .add("node_ids", Json.parse("""["n1"]""").asArray())
+      .add("msg_id", 1)
+    val msg = Message("c0", "n1", body)
+    val newBody = msg.newBodyWithMsgId(body)
+    newBody.iterator().asScala.foreach { e =>
+      val (expected, actual) = e.getName match {
+        case "in_reply_to" =>
+          ("", body.getString("in_reply_to", ""))
+        case fieldName @ _ if e.getValue.isString =>
+          val actual =
+            e.getValue.toString.stripPrefix(""""""").stripSuffix(""""""")
+          val expected = body.getString(fieldName, "")
+          (expected, actual)
+        case fieldName @ _ if e.getValue.isNumber =>
+          val actual = e.getValue.asInt
+          val expected = body.getInt(fieldName, -1)
+          (expected, actual)
+        case _ @_ if e.getValue.isArray =>
+          val actual =
+            e.getValue.asArray().iterator().asScala.toSeq.map(_.asString())
+          (Seq("n1"), actual)
+      }
+      assertResult(expected)(actual)
+    }
+  }
 
   "Init message" should "match replied init message" in {
     val expectedReplyStr =
