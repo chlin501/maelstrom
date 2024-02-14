@@ -1,4 +1,4 @@
-package maelstrom.echo
+package maelstrom
 
 import java.text.SimpleDateFormat
 import java.util.{Date, TimeZone}

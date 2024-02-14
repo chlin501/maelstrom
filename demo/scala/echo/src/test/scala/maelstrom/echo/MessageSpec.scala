@@ -3,6 +3,7 @@ package maelstrom.echo
 import com.eclipsesource.json.{Json, JsonArray}
 import org.scalatest._
 import flatspec._
+import maelstrom.Message
 import org.scalatest.matchers.should._
 
 import scala.jdk.CollectionConverters.IteratorHasAsScala

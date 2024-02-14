@@ -1,4 +1,4 @@
-package maelstrom.echo
+package maelstrom
 
 import com.eclipsesource.json.{Json, JsonObject, JsonValue}
 

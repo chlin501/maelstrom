@@ -2,28 +2,15 @@ package maelstrom.echo
 
 import scala.io.StdIn.readLine
 import com.eclipsesource.json.{Json, JsonObject}
-import maelstrom.echo.Message._
+import maelstrom.{Logging, Message, Node}
+import maelstrom.Message._
+import maelstrom.Node._
 
-object Node extends Logging {
-
-  private final case class Request(msgType: ReceivedType, message: Message)
-
-  private def send(message: Message): Unit = {
-    val data = message.dump()
-    log(s"Message to be sent back: $data")
-    System.out.println(data)
-    System.out.flush()
-  }
-
-  private def reply(src: String, dest: String, body: JsonObject): Message = {
-    val msg = Message(src, dest, body)
-    send(msg)
-    msg
-  }
+object Echo extends Logging {
 
   def main(args: Array[String]): Unit = {
-    val node = new Node()
-    node.accept({ case Request(Echo, request) =>
+    val node = Node[Echo]
+    node.accept { case Request(Message.Echo, request) =>
       log(s"Handle message type 'echo' for the request $request ...");
       val replyMsg = reply(
         request.dest,
@@ -36,20 +23,16 @@ object Node extends Logging {
       log(
         s"Send message back from ${request.dest} $replyMsg to ${request.src}"
       )
-    })
+    }
   }
 }
-class Node extends Logging {
-
-  import Node._
-  import Message._
-
-  private def accept(
+class Echo extends Node[Echo] with Logging {
+  override def accept(
       handle: PartialFunction[Request, Unit]
   ): Unit = LazyList
     .continually(readLine())
     .map { line =>
-      log(s"A line read from stdin: $line")
+      log(s"Read from stdin: $line")
       val request = Message.from(Json.parse(line))
       log(s"Message from the line: $request")
       request.`type`() match {
@@ -66,8 +49,8 @@ class Node extends Logging {
             )
           )
           Init
-        case Echo =>
-          handle(Request(Echo, request))
+        case Message.Echo =>
+          handle(Request(Message.Echo, request))
           Echo
       }
     }
